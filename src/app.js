@@ -3,12 +3,8 @@ import onChange from "on-change";
 import render, { elements } from "./view.js";
 import i18n from "i18next";
 import resources from "./locales/index.js";
-import { renderText } from "./view.js";
 import axios from "axios";
 import parseRSS from "./parseRSS.js";
-
-const EnBtn = document.querySelector("#en");
-const RuBtn = document.querySelector("#ru");
 
 const validate = (url, urls) =>
   yup.string().required().url().notOneOf(urls).validate(url);
@@ -29,17 +25,6 @@ i18next.init({
   lng: state.lng,
   debug: false,
   resources
-});
-// renderText(elements, i18next);
-
-EnBtn.addEventListener("click", () => {
-  i18next.changeLanguage("en");
-  renderText(elements, i18next);
-});
-
-RuBtn.addEventListener("click", () => {
-  i18next.changeLanguage("ru");
-  renderText(elements, i18next);
 });
 
 const buildProxyURL = (url) => {
