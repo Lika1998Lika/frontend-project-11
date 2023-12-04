@@ -50,14 +50,15 @@ export default () => {
       templatePost: document.querySelector('#template-posts-wrapper'),
       templatePostElement: document.querySelector('#template-post-element'),
     };
+
     const initialState = {
       form: {
         status: 'filling',
-        error: null,
+        errors: null,
       },
       loadingProcess: {
         status: 'idle',
-        error: null,
+        errors: null,
       },
       lng: 'ru',
       feeds: [],
@@ -65,6 +66,7 @@ export default () => {
       visitedPostsId: [],
       currentPost: null,
     };
+
     const watchedState = watch(initialState, elements, i18nextInstance);
     elements.form.addEventListener('submit', (evt) => {
       evt.preventDefault();
@@ -123,12 +125,9 @@ export default () => {
         watchedState.visitedPostsId.push(currentPostId);
       }
 
-      if (evt.target.hasAttribute('data-bs-toggle')) {
-        const { id } = evt.target.dataset;
-        watchedState.currentPost = watchedState.posts.find(
-          (post) => post.id === id,
-        );
-      }
+      const { id } = evt.target.dataset;
+      const currentPost = watchedState.posts.find((post) => post.id === id);
+      watchedState.currentPost = currentPost.id;
     });
 
     elements.localesBtnGroup.addEventListener('click', (evt) => {
