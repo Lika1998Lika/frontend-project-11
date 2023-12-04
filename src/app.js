@@ -14,10 +14,12 @@ const validate = (url, urls) => yup
   .notOneOf(urls, 'linkExists')
   .validate(url);
 
-const buildProxyURL = (
-  url,
-) => `https://allorigins.hexlet.app/get?disableCache=true&url=
-  ${encodeURIComponent(url)}`;
+const buildProxyURL = (url) => {
+  const proxiedUrl = new URL('https://allorigins.hexlet.app/get');
+  proxiedUrl.searchParams.set('disableCache', 'true');
+  proxiedUrl.searchParams.set('url', url);
+  return proxiedUrl;
+};
 
 const fetchRSS = (url) => axios.get(buildProxyURL(url));
 
@@ -72,26 +74,31 @@ export default () => {
 
     validate(url, watchedState.urls)
       .then((urlRSS) => {
-        watchedState.urls.push(urlRSS);
         watchedState.form.errors = '';
         watchedState.form.state = 'sending';
         return fetchRSS(urlRSS);
       })
-      .then((RSS) => {
-        const data = parseRSS(RSS.data.contents);
+      .then((response) => {
+        const data = parseRSS(response.data.contents);
         watchedState.feeds.unshift(data.feed);
         watchedState.posts = [...data.posts, ...watchedState.posts];
+        watchedState.urls.push(url);
         watchedState.form.errors = '';
         watchedState.form.state = 'success';
       })
       .catch((err) => {
         watchedState.form.state = 'failed';
-        // if (err.code === 'ERR_NETWORK') {
-        //   watchedState.form.errors = 'network';
-        //   return;
-        // }
         watchedState.form.errors = err.message;
       });
+  });
+
+  elements.input.addEventListener('invalid', (evt) => {
+    const validityState = evt.target.validity;
+    if (validityState.valueMissing) {
+      evt.target.setCustomValidity(i18nextInstance.t('messages.emptyField'));
+    } else {
+      evt.target.setCustomValidity('');
+    }
   });
 
   elements.posts.addEventListener('click', (evt) => {
@@ -113,22 +120,24 @@ export default () => {
     watchedState.lng = language;
   });
 
-  // const updateRssPosts = () => {
-  //   const urls = watchedState.feeds.map((feed) => feed.link);
-  //   const promises = urls
-  //     .map((url) => fetchRSS(url)
-  //       .then((updatedResponse) => {
-  //         const updatedParsedContent = parseRSS(updatedResponse.data.contents);
-  //         const { posts: newPosts } = updatedParsedContent;
-  //         const addedPostsLinks = watchedState.posts.map((post) => post.link);
-  //         const addedNewPosts = newPosts.filter((post) => !addedPostsLinks.includes(post.link));
-  //         watchedState.posts = addedNewPosts.concat(watchedState.posts);
-  //       })
-  //       .catch((err) => {
-  //         throw err;
-  //       }));
-  //   Promise.all(promises)
-  //     .finally(() => setTimeout(() => updateRssPosts(), 5000));
-  // };
-  // updateRssPosts();
+  const updatePosts = () => {
+    const { urls } = watchedState;
+    console.log(urls);
+    axios.get(buildProxyURL('http://feeds.bbci.co.uk/news/world/rss.xml'))
+      .then((response) => {
+        const updatedData = parseRSS(response.data.contents);
+        const newPosts = updatedData.posts;
+        const postLinks = watchedState.posts.map((post) => post.link);
+        const addedPosts = newPosts.filter(
+          (post) => !postLinks.includes(post.link),
+        );
+        const updatedPosts = addedPosts.concat(...watchedState.posts);
+        console.log(updatedPosts);
+      })
+      .catch((e) => console.log(e.message));
+
+    setInterval(() => updatePosts(), 5000);
+  };
+
+  updatePosts();
 };
