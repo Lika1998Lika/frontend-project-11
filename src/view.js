@@ -46,7 +46,7 @@ const renderFeeds = (feeds, elements, i18next) => {
   feedsContainer.append(feedWrapper);
 };
 
-const renderPosts = (posts, elements, i18next) => {
+const renderPosts = (state, posts, elements, i18next) => {
   const { postsContainer, templatePost, templatePostElement } = elements;
 
   const postsElements = posts.map((post) => {
@@ -59,6 +59,12 @@ const renderPosts = (posts, elements, i18next) => {
     linkEl.href = link;
     buttonEl.setAttribute('data-id', id);
     linkEl.setAttribute('data-id', id);
+
+    if (state.visitedPostsId.includes(id)) {
+      linkEl.classList.add('fw-normal', 'link-secondary');
+    } else {
+      linkEl.classList.add('fw-bold');
+    }
 
     return postElement;
   });
@@ -131,7 +137,7 @@ const processHandler = (status, elements, i18next) => {
       feedback.classList.add('text-success');
       feedback.textContent = i18next.t('messages.success');
       break;
-    default: console.log('Мимо всех');
+    default:
       break;
   }
 };
@@ -140,12 +146,12 @@ const renderError = (errType, elements, i18next) => {
   const { input, feedback } = elements;
   input.classList.add('is-invalid');
   feedback.classList.add('text-danger');
-  feedback.textContent = i18next.t(`messages.${errType}`);
+  feedback.textContent = errType ? i18next.t(`messages.${errType}`) : '';
 };
 
 const watch = (state, elements, i18nextInstance) => onChange(state, (path, value) => {
   switch (path) {
-    case 'form.state':
+    case 'form.status':
       clear(elements);
       processHandler(value, elements, i18nextInstance);
       break;
@@ -153,11 +159,19 @@ const watch = (state, elements, i18nextInstance) => onChange(state, (path, value
       clear(elements);
       renderError(value, elements, i18nextInstance);
       break;
+    case 'loadingProcess.status':
+      clear(elements);
+      processHandler(value, elements, i18nextInstance);
+      break;
+    case 'loadingProcess.errors':
+      clear(elements);
+      renderError(value, elements, i18nextInstance);
+      break;
     case 'feeds':
       renderFeeds(value, elements, i18nextInstance);
       break;
     case 'posts':
-      renderPosts(value, elements, i18nextInstance);
+      renderPosts(state, value, elements, i18nextInstance);
       break;
     case 'lng':
       changeLng(elements, value, i18nextInstance);
