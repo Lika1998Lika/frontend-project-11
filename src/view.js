@@ -13,6 +13,17 @@ const renderText = (elements, i18next) => {
   button.textContent = i18next.t('button');
 };
 
+const changeLng = (elements, value, i18next) => {
+  const buttons = elements.localesBtnGroup.querySelectorAll('.btn-lng');
+  buttons.forEach((btn) => {
+    btn.classList.remove('active');
+    const activeButton = document.querySelector(`[data-lng="${value}"]`);
+    activeButton.classList.add('active');
+    i18next.changeLanguage(value);
+    renderText(elements, i18next);
+  });
+};
+
 const renderFeeds = (feeds, elements, i18next) => {
   const { feedsContainer, templateFeed, templateFeedElement } = elements;
 
