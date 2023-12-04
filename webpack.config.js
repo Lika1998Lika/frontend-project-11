@@ -3,9 +3,10 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-// const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
 const isProduction = process.env.NODE_ENV === 'production';
+
+const stylesHandler = MiniCssExtractPlugin.loader;
 
 const config = {
   entry: './src/index.js',
@@ -18,9 +19,11 @@ const config = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: 'index.html',
+      template: './src/template.html',
     }),
+
     new MiniCssExtractPlugin(),
+
     // Add your plugins here
     // Learn more about plugins from https://webpack.js.org/configuration/plugins/
   ],
@@ -32,11 +35,11 @@ const config = {
       },
       {
         test: /\.css$/i,
-        use: [MiniCssExtractPlugin.loader, 'css-loader'],
+        use: [stylesHandler, 'css-loader'],
       },
       {
         test: /\.s[ac]ss$/i,
-        use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader'],
+        use: [stylesHandler, 'css-loader', 'sass-loader'],
       },
       {
         test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
@@ -55,8 +58,5 @@ module.exports = () => {
   } else {
     config.mode = 'development';
   }
-  return {
-    ...config,
-    resolve: { fallback: { path: false, 'node:path': false } },
-  };
+  return config;
 };
