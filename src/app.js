@@ -1,9 +1,7 @@
 import * as yup from 'yup';
-import onChange from 'on-change';
-import i18n from 'i18next';
+import i18next from 'i18next';
 import axios from 'axios';
-
-import render from './view';
+import watch from './view';
 import resources from './locales/index';
 import parseRSS from './parseRSS';
 
@@ -16,12 +14,10 @@ const validate = (url, urls) => yup
   .notOneOf(urls, 'linkExists')
   .validate(url);
 
-const buildProxyURL = (url) => {
-  const proxyUrl = 'https://allorigins.hexlet.app/raw?url=https://';
-  const parsedUrl = new URL(url);
-  const { host, pathname } = parsedUrl;
-  return `${proxyUrl}${host}/${pathname}`;
-};
+const buildProxyURL = (
+  url,
+) => `https://allorigins.hexlet.app/get?disableCache=true&url=
+  ${encodeURIComponent(url)}`;
 
 const fetchRSS = (url) => axios.get(buildProxyURL(url));
 
@@ -39,9 +35,16 @@ export default () => {
     modalBody: document.querySelector('.modal-body'),
     modalLink: document.querySelector('.modalLink'),
     localesBtnGroup: document.querySelector('.btn-group'),
+    feedsContainer: document.querySelector('.feeds'),
+    postsContainer: document.querySelector('.posts'),
+
+    templateFeed: document.querySelector('#template-feeds-wrapper'),
+    templateFeedElement: document.querySelector('#template-feed-element'),
+    templatePost: document.querySelector('#template-posts-wrapper'),
+    templatePostElement: document.querySelector('#template-post-element'),
   };
 
-  const state = {
+  const initialState = {
     form: {
       state: 'filling',
       errors: '',
@@ -54,14 +57,14 @@ export default () => {
     currentPost: null,
   };
 
-  const i18next = i18n.createInstance();
-  i18next.init({
+  const i18nextInstance = i18next.createInstance();
+  i18nextInstance.init({
     lng: defaulltLng,
     debug: false,
     resources,
   });
 
-  const watchedState = onChange(state, render(elements, i18next));
+  const watchedState = watch(initialState, elements, i18nextInstance);
   elements.form.addEventListener('submit', (evt) => {
     evt.preventDefault();
     const formData = new FormData(evt.target);
@@ -75,11 +78,11 @@ export default () => {
         return fetchRSS(urlRSS);
       })
       .then((RSS) => {
-          const data = parseRSS(RSS);
-          watchedState.feeds.unshift(data.feed);
-          watchedState.posts = [...data.posts, ...watchedState.posts];
-          watchedState.form.errors = '';
-          watchedState.form.state = 'success';
+        const data = parseRSS(RSS.data.contents);
+        watchedState.feeds.unshift(data.feed);
+        watchedState.posts = [...data.posts, ...watchedState.posts];
+        watchedState.form.errors = '';
+        watchedState.form.state = 'success';
       })
       .catch((err) => {
         watchedState.form.state = 'failed';
@@ -97,7 +100,7 @@ export default () => {
       watchedState.visitedPostsId.push(currentPostId);
     }
 
-    if (evt.target.hasAttribute('data-toggle')) {
+    if (evt.target.hasAttribute('data-bs-toggle')) {
       const { id } = evt.target.dataset;
       watchedState.currentPost = watchedState.posts.find(
         (post) => post.id === id,
@@ -109,4 +112,24 @@ export default () => {
     const language = evt.target.dataset.lng;
     watchedState.lng = language;
   });
+
+  // const updatePosts = () => {
+  //   console.log(watchedState.posts);
+  //   const urls = watchedState.feeds.map((feed) => feed.url);
+  //   const promises = urls
+  //     .map((url) => fetchRSS(url)
+  //       .then((updatedRSS) => {
+  //         const updatedParsedContent = parseRSS(updatedRSS.data.contents);
+  //         const newPosts = updatedParsedContent.posts;
+  //         const addedPostsLinks = watchedState.posts.map((post) => post.link);
+  //         const addedNewPosts = newPosts.filter((post) => !addedPostsLinks.includes(post.link));
+  //         watchedState.posts = [addedNewPosts, ...watchedState.posts]
+  //       })
+  //       .catch((err) => {
+  //         throw err;
+  //       }));
+  //   Promise.all(promises)
+  //     .finally(() => setTimeout(() => updatePosts(), 2000));
+  // };
+  // updatePosts();
 };
