@@ -16,11 +16,14 @@ const validate = (url, urls) => yup
   .notOneOf(urls, 'linkExists')
   .validate(url);
 
-const buildProxyURL = (url) => `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(
-  url,
-)}`;
+const addProxy = (url) => {
+  const urlWithProxy = new URL('/get', 'https://allorigins.hexlet.app');
+  urlWithProxy.searchParams.set('url', url);
+  urlWithProxy.searchParams.set('disableCache', 'true');
+  return urlWithProxy.toString();
+};
 
-const fetchRSS = (url) => axios.get(buildProxyURL(url));
+const fetchRSS = (url) => axios.get(addProxy(url));
 
 export default () => {
   const i18nextInstance = i18next.createInstance();
@@ -74,12 +77,10 @@ export default () => {
       const url = formData.get('url');
       const urls = watchedState.feeds.map((feed) => feed.url);
       validate(url, urls)
-        .then((urlRSS) => {
+        .then((validatedUrl) => {
           watchedState.form.errors = null;
           watchedState.form.status = 'sending';
-          return urlRSS;
-        })
-        .then((validatedUrl) => {
+
           watchedState.loadingProcess.errors = null;
           watchedState.loadingProcess.status = 'sending';
           return fetchRSS(validatedUrl);

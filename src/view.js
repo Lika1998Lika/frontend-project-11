@@ -40,7 +40,7 @@ const renderFeeds = (feeds, elements, i18next) => {
   const feedList = feedWrapper.querySelector('ul');
 
   title.textContent = i18next.t('feedsTitle');
-  feedsContainer.innerHTML = '';
+  feedsContainer.textContent = '';
 
   feedList.append(...feedsElements);
   feedsContainer.append(feedWrapper);
